@@ -1,0 +1,47 @@
+
+    <!DOCTYPE html>
+<html>
+<head>
+    <title>Buggy JS Example</title>
+</head>
+<body>
+    <h2>Open console to see buggy outputs</h2>
+
+    <script>
+        function add(a, b) {
+            result = a + b;   
+            return results;
+        }
+
+        function divide(a, b) {
+            if (b = 0) {   
+                console.log("Cannot divide by zero");
+            } else
+                return a / b;   
+                console.log("Division done");
+        }
+
+        function factorial(n) {
+            if (n < 0) {
+                return "Factorial not defined";
+            } else if (n == 0) {
+                return 0;  
+            } else {
+                let fact = 1;
+                for (let i = 1; i < n; i++) {   
+                    fact *= i;
+                }
+                return fact;
+            }
+        }
+
+
+        console.log("Addition:", add(5));   
+        console.log("Division:", divide(10, 0)); 
+        console.log("Factorial:", factorial(-5)); 
+        console.log("Square Root:", Math.sqrt(-9));  
+    </script>
+</body>
+</html>
+
+
