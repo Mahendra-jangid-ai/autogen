@@ -14,16 +14,13 @@ from tkinter.filedialog import askopenfilename
 import asyncio
 import json5
 
-# Attempt to import jsonschema; if not present, will try to install.
 try:
     import jsonschema
 except Exception:
     jsonschema = None
 
-# langchain client
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# ---------------- Logging ---------------- #
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s - %(message)s",
@@ -31,7 +28,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ui-generator-super")
 
-# ---------------- Config & file selection ---------------- #
 Tk().withdraw()
 
 INPUT_SYSTEM_FILE = os.getenv("INPUT_SYSTEM_FILE") or askopenfilename(
@@ -58,7 +54,6 @@ MAX_ATTEMPTS = int(os.getenv("MAX_ATTEMPTS", "5"))
 SUMMARIZE_INPUTS = os.getenv("SUMMARIZE_INPUTS", "0").strip() in ("1", "true", "yes")
 FORCE_FULL_PROMPT = os.getenv("FORCE_FULL_PROMPT", "0").strip() in ("1", "true", "yes")
 
-# ---------------- Utilities ---------------- #
 def read_json_file(path: str) -> Dict:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -93,7 +88,6 @@ def try_install_jsonschema():
             jsonschema = None
 
 
-# ---------------- Simple summarizer (token-saver) ---------------- #
 def summarize_json_for_prompt(j: Dict, role: str = "system", max_chars: int = 4000) -> Tuple[str, bool]:
     """
     Produce a concise, structured summary of an input JSON for embedding in the prompt.
@@ -137,7 +131,6 @@ def summarize_json_for_prompt(j: Dict, role: str = "system", max_chars: int = 40
         return f"(unable to summarize input: {e})", True
 
 
-# ---------------- JSON Schema for ui_spec (strict) ---------------- #
 UI_SPEC_JSON_SCHEMA: Dict[str, Any] = {
     "type": "object",
     "required": ["project", "inferred_domain", "generated_at", "source_files", "purpose", "assumptions", "pages", "components", "data_models", "implementation_notes", "accessibility_summary", "i18n_keys_sample", "performance_tips", "monitoring_and_metrics", "testing_plan", "deployment_plan", "next_steps"],
@@ -165,8 +158,6 @@ UI_SPEC_JSON_SCHEMA: Dict[str, Any] = {
     "additionalProperties": True
 }
 
-# ---------------- Few-shot examples (compact) ---------------- #
-# Keep examples compact but representative of the structure we want.
 FEW_SHOT_EXAMPLES = [
     {
         "input": {
@@ -209,7 +200,6 @@ FEW_SHOT_EXAMPLES = [
     }
 ]
 
-# ---------------- Master Prompt (very detailed) ---------------- #
 def build_master_prompt(system_json: Dict, req_json: Dict, summarize_inputs: bool = True, examples: List[Dict] = None) -> str:
     """
     Build an ultra-detailed master prompt that:
@@ -217,7 +207,6 @@ def build_master_prompt(system_json: Dict, req_json: Dict, summarize_inputs: boo
     - requires complete production-ready ui_spec JSON
     - contains few-shot examples and chain-of-thought style instructions
     """
-    # Summarize or embed inputs
     if summarize_inputs and not FORCE_FULL_PROMPT:
         sys_summary, sys_trunc = summarize_json_for_prompt(system_json, role="system", )
         req_summary, req_trunc = summarize_json_for_prompt(req_json, role="requirements",)
@@ -227,14 +216,12 @@ def build_master_prompt(system_json: Dict, req_json: Dict, summarize_inputs: boo
         system_block = "FULL_SYSTEM_JSON:\n" + json.dumps(system_json, indent=2, ensure_ascii=False)
         requirements_block = "FULL_REQUIREMENTS_JSON:\n" + json.dumps(req_json, indent=2, ensure_ascii=False)
 
-    # Prepare few-shot snippet (compact)
     examples_text = ""
     if examples:
         for i, ex in enumerate(examples[:3], start=1):
             examples_text += f"\n### EXAMPLE {i} INPUT\n{json.dumps(ex['input'], ensure_ascii=False)}\n"
             examples_text += f"### EXAMPLE {i} OUTPUT (JSON only)\n{json.dumps(ex['output'], ensure_ascii=False)}\n"
 
-    # Long, explicit instructions
     master_instructions = textwrap.dedent(f"""
     You are an AI Senior Product Designer, UX Writer, and Full-Stack Architect.
     Your job is to generate a single JSON object with top-level key "ui_spec".
@@ -341,9 +328,7 @@ def build_master_prompt(system_json: Dict, req_json: Dict, summarize_inputs: boo
     prompt = master_instructions
     return prompt
 
-# ---------------- Parsing helpers ---------------- #
 def extract_json_from_text(text: str) -> Optional[Dict]:
-    # Try direct parse
     cleaned = text.strip()
     cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE | re.MULTILINE)
     cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE)
@@ -351,7 +336,6 @@ def extract_json_from_text(text: str) -> Optional[Dict]:
         return json.loads(cleaned)
     except Exception:
         pass
-    # fallback: extract largest JSON block
     braces = []
     start = None
     largest = None
@@ -375,22 +359,17 @@ def extract_json_from_text(text: str) -> Optional[Dict]:
                 return json.loads(largest)
             except Exception:
                 return None
-    # final fallback: json5 attempt on whole text
     try:
         return json5.loads(text)
     except Exception:
         return None
 
-# ---------------- Main generation + refinement loop ---------------- #
 async def generate_ui_spec():
-    # Ensure jsonschema
     try_install_jsonschema()
 
-    # Load inputs
     system_json = read_json_file(INPUT_SYSTEM_FILE)
     req_json = read_json_file(INPUT_REQUIRE_FILE)
 
-    # Build prompt
     prompt = build_master_prompt(system_json, req_json, summarize_inputs=SUMMARIZE_INPUTS, examples=FEW_SHOT_EXAMPLES)
 
     logger.info("Prompt length: %d chars", len(prompt))
@@ -408,7 +387,6 @@ async def generate_ui_spec():
         attempt += 1
         logger.info("Generation attempt %d/%d", attempt, MAX_ATTEMPTS)
         try:
-            # Prefer async invocation
             resp = await model.ainvoke(prompt)
         except AttributeError:
             resp = model.invoke(prompt)
@@ -424,9 +402,7 @@ async def generate_ui_spec():
         if parsed is None:
             logger.warning("Could not parse JSON from model output. Attempting refinement prompt.")
         else:
-            # Accept top-level either {"ui_spec": {...}} or {...}
             ui_spec = parsed.get("ui_spec") if isinstance(parsed, dict) and "ui_spec" in parsed else parsed
-            # Validate using jsonschema if available, else basic required-key check
             valid = False
             validation_errors = None
             if jsonschema:
@@ -437,7 +413,6 @@ async def generate_ui_spec():
                     validation_errors = str(e)
                     valid = False
             else:
-                # basic check
                 missing = [k for k in UI_SPEC_JSON_SCHEMA["required"] if k not in ui_spec]
                 if missing:
                     validation_errors = f"Missing keys: {missing}"
@@ -446,7 +421,6 @@ async def generate_ui_spec():
                     valid = True
 
             if valid:
-                # write final
                 atomic_write_json(GENERATED_JSON_PATH, {"ui_spec": ui_spec})
                 logger.info("Generation succeeded and validated on attempt %d", attempt)
                 print("SUCCESS:", GENERATED_JSON_PATH)
@@ -454,7 +428,6 @@ async def generate_ui_spec():
             else:
                 logger.warning("Validation failed: %s", validation_errors)
 
-        # Refinement: produce a second prompt that includes the raw output and asks to fix/make-complete
         refine_instruction = {
             "reason": "validation_failed" if parsed else "parse_failed",
             "parsed": parsed or {},
@@ -480,11 +453,9 @@ async def generate_ui_spec():
         3) Keep all explanations INSIDE the JSON (e.g., as "explanations_for_junior" strings). Do NOT output any free text outside the JSON.
         4) Return ONLY the corrected JSON object with top-level "ui_spec".
         """)
-        # Next iteration, prompt = refine_prompt
         prompt = refine_prompt
         logger.info("Refinement prompt prepared. Retrying...")
 
-    # If reached here, final failure
     logger.error("Failed to produce validated ui_spec after %d attempts. Saving failed output.", MAX_ATTEMPTS)
     if last_raw:
         save_raw_output(FAILED_JSON_PATH, last_raw)
