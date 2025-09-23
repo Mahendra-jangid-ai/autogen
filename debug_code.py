@@ -49,16 +49,9 @@ def debug_code(code: str, file_path: str = "temp_code.py"):
 
 
 buggy_code = """
-class A:
-    def(a,b)
-
-class B(A):
-    def (b,c)
-
-a = ()
-b = ()
-pnt(a.def)
-pnt(b.def)
+public static void main(String[] args) {
+    System.out.println("Hello, World!")
+}
 """
 
 result = debug_code(buggy_code)

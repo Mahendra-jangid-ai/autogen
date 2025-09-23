@@ -1,753 +1,354 @@
 {
   "ui_spec": {
-    "project": "ElectricShop",
-    "inferred_domain": "e-commerce",
-    "generated_at": "2024-01-26T12:00:00Z",
+    "project": "Recipe App",
+    "inferred_domain": "Food & Recipe",
+    "generated_at": "2023-10-27T16:30:00Z",
     "source_files": {
-      "system": "system_design_20250828_150437.json",
-      "requirements": "requirements.json"
+      "system_design": "system_designs/system_design_20250828_150437.json",
+      "requirements": "requirements/requirements_20250828_150428.json"
     },
-    "purpose": "Provide a comprehensive e-commerce platform for browsing, purchasing, and managing electric products.",
+    "purpose": "To design and specify the UI for a recipe application that allows users to search, filter, save, and view recipes.",
     "assumptions": [
-      "Users can register and login",
-      "Payment gateway integration is handled separately",
-      "Shipping logic is handled separately",
-      "Image hosting is handled separately",
-      "Admin users have full access"
+      "JWT is used for authentication.",
+      "Recipes are fetched in batches of 20.",
+      "Images are optimized for web performance.",
+      "The application will support English and Spanish."
     ],
     "pages": [
       {
-        "name": "Homepage",
-        "type": "Page",
-        "route": "/",
-        "seo_meta": {
-          "title": "ElectricShop - Your Source for Electric Products",
-          "description": "Browse the latest electric products."
+        "purpose": "Display featured recipes and allow users to search for recipes.",
+        "props": {
+          "schema": {
+            "featuredRecipes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RecipeSummary"
+              }
+            }
+          },
+          "example": {
+            "featuredRecipes": [
+              {
+                "recipe_id": 1,
+                "recipe_name": "Pasta Carbonara",
+                "image_url": "/images/pasta_carbonara.jpg",
+                "prep_time": 15,
+                "cook_time": 20
+              }
+            ]
+          }
         },
-        "props": {},
         "content": [
           {
             "type": "Heading",
-            "content": "Welcome to ElectricShop!",
-            "purpose": "Welcome message",
-            "developer_instructions": [],
-            "a11y_notes": "Heading level 1 (h1)",
-            "mobile_notes": "Maintain visual hierarchy",
+            "content": "Welcome to Our Recipe App!",
+            "purpose": "Welcome the user.",
+            "developer_instructions": [
+              "Render a h1 element with the text."
+            ],
+            "a11y_notes": "Use role=\"heading\" aria-level=\"1\"",
+            "mobile_notes": "Ensure text is appropriately sized for smaller screens.",
             "loading_state": {
-              "message": "Loading..."
+              "message": "Loading...",
+              "developer_guidance": "Display a loading indicator."
             },
             "empty_state": {},
             "error_state": {}
           },
           {
             "type": "Paragraph",
-            "content": "Discover a wide selection of high-quality electric products.",
-            "purpose": "Brief description",
-            "developer_instructions": [],
-            "a11y_notes": "",
-            "mobile_notes": "",
+            "content": "Discover delicious and healthy recipes.",
+            "purpose": "Provide a brief description of the app.",
+            "developer_instructions": [
+              "Render a p element with the text."
+            ],
+            "a11y_notes": {},
+            "mobile_notes": {},
             "loading_state": {},
             "empty_state": {},
             "error_state": {}
           },
           {
-            "type": "FeaturedProducts",
-            "purpose": "Showcase featured products",
+            "type": "RecipeList",
+            "content": "Featured Recipes",
+            "purpose": "Display featured recipes.",
             "developer_instructions": [
-              "Fetch featured products using GET /api/products?featured=true"
+              "Fetch featured recipes from `/recipes` endpoint.",
+              "Pass the data to the `RecipeList` component."
             ],
-            "a11y_notes": "ARIA labels for each product",
-            "mobile_notes": "Use carousel for smaller screens",
+            "a11y_notes": "Ensure proper ARIA attributes for list items.",
+            "mobile_notes": "Use a responsive grid layout.",
             "loading_state": {
-              "message": "Loading featured products..."
+              "message": "Loading featured recipes...",
+              "developer_guidance": "Display a loading indicator."
             },
             "empty_state": {
-              "message": "No featured products found."
+              "message": "No featured recipes found.",
+              "developer_guidance": "Display a message indicating no recipes."
             },
             "error_state": {
-              "message": "Error loading featured products."
-            }
-          },
-          {
-            "type": "SearchBar",
-            "purpose": "Allow users to search products",
-            "developer_instructions": [],
-            "a11y_notes": "ARIA attributes for search input and button",
-            "mobile_notes": "Use full-width search bar",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "Categories",
-            "purpose": "Display product categories",
-            "developer_instructions": [
-              "Fetch categories using GET /api/categories"
-            ],
-            "a11y_notes": "ARIA labels for each category",
-            "mobile_notes": "Use dropdown for smaller screens",
-            "loading_state": {
-              "message": "Loading categories..."
-            },
-            "empty_state": {},
-            "error_state": {
-              "message": "Error loading categories."
+              "message": "Error loading featured recipes.",
+              "developer_guidance": "Display an error message and retry button."
             }
           }
-        ],
-        "explanations_for_junior": [
-          "Homepage is the first page users see. It should be visually appealing and easy to navigate.",
-          "Featured products are highlighted to attract attention.",
-          "Search bar allows users to quickly find products.",
-          "Categories help users browse products by type."
-        ]
-      },
-      {
-        "name": "Product Listing",
-        "type": "Page",
-        "route": "/products",
-        "seo_meta": {
-          "title": "ElectricShop - Products",
-          "description": "Browse our wide selection of electric products."
-        },
-        "props": {
-          "category": "string",
-          "filters": "object"
-        },
-        "content": [
-          {
-            "type": "Heading",
-            "content": "Electric Products",
-            "purpose": "Page title",
-            "developer_instructions": [],
-            "a11y_notes": "Heading level 1 (h1)",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "Filters",
-            "purpose": "Allow users to filter products",
-            "developer_instructions": [],
-            "a11y_notes": "ARIA attributes for filter controls",
-            "mobile_notes": "Use accordions for smaller screens",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "ProductList",
-            "purpose": "Display list of products",
-            "developer_instructions": [
-              "Fetch products using GET /api/products with filters",
-              "Pagination is handled by backend"
-            ],
-            "a11y_notes": "ARIA labels for each product",
-            "mobile_notes": "Use grid layout for smaller screens",
-            "loading_state": {
-              "message": "Loading products..."
-            },
-            "empty_state": {
-              "message": "No products found."
-            },
-            "error_state": {
-              "message": "Error loading products."
-            }
-          }
-        ],
-        "explanations_for_junior": [
-          "Product Listing page displays a list of products based on filters.",
-          "Filters allow users to refine their search.",
-          "ProductList component renders individual product cards."
-        ]
-      },
-      {
-        "name": "Product Detail",
-        "type": "Page",
-        "route": "/products/:productId",
-        "seo_meta": {
-          "title": "ElectricShop - Product Detail",
-          "description": "View product details and specifications."
-        },
-        "props": {
-          "product": "object"
-        },
-        "content": [
-          {
-            "type": "Heading",
-            "content": "{{product.name}}",
-            "purpose": "Product title",
-            "developer_instructions": [
-              "Fetch product details using GET /api/products/:productId"
-            ],
-            "a11y_notes": "Heading level 1 (h1)",
-            "mobile_notes": "",
-            "loading_state": {
-              "message": "Loading product details..."
-            },
-            "empty_state": {
-              "message": "Product not found."
-            },
-            "error_state": {
-              "message": "Error loading product details."
-            }
-          },
-          {
-            "type": "ProductImages",
-            "purpose": "Display product images",
-            "developer_instructions": [],
-            "a11y_notes": "ARIA labels for images",
-            "mobile_notes": "Use carousel for smaller screens",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "ProductSpecifications",
-            "purpose": "Display product specifications",
-            "developer_instructions": [],
-            "a11y_notes": "Table structure with clear labels",
-            "mobile_notes": "Use accordions for smaller screens",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "ProductDescription",
-            "purpose": "Display product description",
-            "developer_instructions": [],
-            "a11y_notes": "",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "AddToCart",
-            "purpose": "Allow users to add product to cart",
-            "developer_instructions": [
-              "POST /api/cart with product ID and quantity"
-            ],
-            "a11y_notes": "ARIA attributes for button",
-            "mobile_notes": "",
-            "loading_state": {
-              "message": "Adding to cart..."
-            },
-            "empty_state": {},
-            "error_state": {
-              "message": "Error adding to cart."
-            }
-          },
-          {
-            "type": "ProductReviews",
-            "purpose": "Display product reviews",
-            "developer_instructions": [
-              "Fetch reviews using GET /api/reviews?productId=:productId"
-            ],
-            "a11y_notes": "ARIA labels for reviews",
-            "mobile_notes": "",
-            "loading_state": {
-              "message": "Loading reviews..."
-            },
-            "empty_state": {
-              "message": "No reviews yet."
-            },
-            "error_state": {
-              "message": "Error loading reviews."
-            }
-          }
-        ],
-        "explanations_for_junior": [
-          "Product Detail page shows all information about a specific product.",
-          "Images help users visualize the product.",
-          "Specifications provide technical details.",
-          "Description gives a detailed overview.",
-          "Add to Cart button adds the product to the user's cart.",
-          "Reviews provide user feedback."
-        ]
-      },
-      {
-        "name": "Cart",
-        "type": "Page",
-        "route": "/cart",
-        "seo_meta": {
-          "title": "ElectricShop - Cart",
-          "description": "View your shopping cart."
-        },
-        "props": {
-          "cartItems": "array"
-        },
-        "content": [
-          {
-            "type": "Heading",
-            "content": "Shopping Cart",
-            "purpose": "Page title",
-            "developer_instructions": [],
-            "a11y_notes": "Heading level 1 (h1)",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "CartItems",
-            "purpose": "Display cart items",
-            "developer_instructions": [
-              "Fetch cart items using GET /api/cart"
-            ],
-            "a11y_notes": "ARIA labels for each item",
-            "mobile_notes": "",
-            "loading_state": {
-              "message": "Loading cart items..."
-            },
-            "empty_state": {
-              "message": "Your cart is empty."
-            },
-            "error_state": {
-              "message": "Error loading cart items."
-            }
-          },
-          {
-            "type": "CartSummary",
-            "purpose": "Display cart summary",
-            "developer_instructions": [],
-            "a11y_notes": "",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "CheckoutButton",
-            "purpose": "Proceed to checkout",
-            "developer_instructions": [],
-            "a11y_notes": "ARIA attributes for button",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          }
-        ],
-        "explanations_for_junior": [
-          "Cart page displays items added to the cart.",
-          "CartItems component renders each item with quantity and price.",
-          "CartSummary shows total price and other relevant information.",
-          "CheckoutButton navigates to the checkout page."
-        ]
-      },
-      {
-        "name": "Checkout",
-        "type": "Page",
-        "route": "/checkout",
-        "seo_meta": {
-          "title": "ElectricShop - Checkout",
-          "description": "Complete your purchase."
-        },
-        "props": {
-          "order": "object"
-        },
-        "content": [
-          {
-            "type": "Heading",
-            "content": "Checkout",
-            "purpose": "Page title",
-            "developer_instructions": [],
-            "a11y_notes": "Heading level 1 (h1)",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "BillingAddress",
-            "purpose": "Collect billing address",
-            "developer_instructions": [],
-            "a11y_notes": "ARIA attributes for form fields",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "ShippingAddress",
-            "purpose": "Collect shipping address",
-            "developer_instructions": [],
-            "a11y_notes": "ARIA attributes for form fields",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "PaymentMethod",
-            "purpose": "Select payment method",
-            "developer_instructions": [],
-            "a11y_notes": "ARIA attributes for radio buttons",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "OrderSummary",
-            "purpose": "Display order summary",
-            "developer_instructions": [],
-            "a11y_notes": "",
-            "mobile_notes": "",
-            "loading_state": {},
-            "empty_state": {},
-            "error_state": {}
-          },
-          {
-            "type": "PlaceOrderButton",
-            "purpose": "Place the order",
-            "developer_instructions": [
-              "POST /api/orders"
-            ],
-            "a11y_notes": "ARIA attributes for button",
-            "mobile_notes": "",
-            "loading_state": {
-              "message": "Placing order..."
-            },
-            "empty_state": {},
-            "error_state": {
-              "message": "Error placing order."
-            }
-          }
-        ],
-        "explanations_for_junior": [
-          "Checkout page guides users through the purchase process.",
-          "Billing and shipping addresses are collected.",
-          "Payment method is selected.",
-          "OrderSummary shows final details.",
-          "PlaceOrderButton submits the order."
         ]
       }
     ],
     "components": [
       {
-        "name": "ProductCard",
+        "name": "RecipeCard",
         "type": "Component",
         "props": {
-          "product": {
-            "product_id": "string",
-            "name": "string",
-            "brand": "string",
-            "category": "string",
-            "price": "number",
-            "rating": "number",
-            "image": "string"
+          "schema": {
+            "recipe": {
+              "$ref": "#/definitions/RecipeSummary"
+            }
           }
         },
         "sample_props": {
-          "product_id": "123",
-          "name": "Smart TV",
-          "brand": "ABC",
-          "category": "TV",
-          "price": 1000,
-          "rating": 4.5,
-          "image": "/images/tv.jpg"
-        },
-        "microcopy": {
-          "addToCart": "🛒 Add to Cart"
-        },
-        "validation_rules": {},
-        "developer_instructions": [
-          "Render product details using props",
-          "Handle Add to Cart event"
-        ],
-        "accessibility_notes": "ARIA labels for all interactive elements"
-      },
-      {
-        "name": "ProductList",
-        "type": "Component",
-        "props": {
-          "products": "array"
-        },
-        "sample_props": [
-          {
-            "product_id": "123",
-            "name": "Smart TV",
-            "brand": "ABC",
-            "category": "TV",
-            "price": 1000,
-            "rating": 4.5,
-            "image": "/images/tv.jpg"
-          },
-          {
-            "product_id": "456",
-            "name": "Laptop",
-            "brand": "XYZ",
-            "category": "Laptop",
-            "price": 1500,
-            "rating": 4,
-            "image": "/images/laptop.jpg"
+          "recipe": {
+            "recipe_id": 1,
+            "recipe_name": "Pasta Carbonara",
+            "image_url": "/images/pasta_carbonara.jpg",
+            "prep_time": 15,
+            "cook_time": 20
           }
-        ],
-        "microcopy": {},
-        "validation_rules": {},
-        "developer_instructions": [
-          "Render ProductCard for each product"
-        ],
-        "accessibility_notes": "ARIA labels for each product"
-      },
-      {
-        "name": "Filters",
-        "type": "Component",
-        "props": {
-          "filters": "object"
-        },
-        "sample_props": {
-          "category": [
-            "TV",
-            "Laptop"
-          ],
-          "price": [
-            1000,
-            2000
-          ]
-        },
-        "microcopy": {},
-        "validation_rules": {},
-        "developer_instructions": [
-          "Implement filter controls based on props"
-        ],
-        "accessibility_notes": "ARIA attributes for filter controls"
-      },
-      {
-        "name": "AddToCart",
-        "type": "Component",
-        "props": {
-          "product_id": "string"
-        },
-        "sample_props": {
-          "product_id": "123"
         },
         "microcopy": {
-          "addToCart": "🛒 Add to Cart"
+          "title": "{{recipe.recipe_name}}",
+          "prep_time": "Prep time: {{recipe.prep_time}} min",
+          "cook_time": "Cook time: {{recipe.cook_time}} min"
         },
         "validation_rules": {},
         "developer_instructions": [
-          "Handle Add to Cart event",
-          "POST /api/cart"
+          "Implement using React.",
+          "Use Redux for state management.",
+          "Write unit tests using Jest and React Testing Library."
         ],
-        "accessibility_notes": "ARIA attributes for button"
+        "accessibility_notes": "Ensure sufficient color contrast and keyboard navigation."
       }
     ],
     "data_models": {
-      "products": {
-        "product_id": {
-          "type": "string",
-          "required": true
+      "recipes": {
+        "fields": [
+          {
+            "field": "recipe_id",
+            "type": "SERIAL PRIMARY KEY"
+          },
+          {
+            "field": "recipe_name",
+            "type": "VARCHAR(255)",
+            "required": true
+          },
+          {
+            "field": "description",
+            "type": "TEXT"
+          },
+          {
+            "field": "ingredients",
+            "type": "JSONB"
+          },
+          {
+            "field": "instructions",
+            "type": "TEXT"
+          },
+          {
+            "field": "image_url",
+            "type": "VARCHAR(255)"
+          },
+          {
+            "field": "prep_time",
+            "type": "INTEGER"
+          },
+          {
+            "field": "cook_time",
+            "type": "INTEGER"
+          },
+          {
+            "field": "servings",
+            "type": "INTEGER"
+          },
+          {
+            "field": "calories",
+            "type": "INTEGER"
+          },
+          {
+            "field": "dietary_restrictions",
+            "type": "JSONB"
+          },
+          {
+            "field": "nutritional_info",
+            "type": "JSONB"
+          }
+        ],
+        "sample_record": {
+          "recipe_id": 1,
+          "recipe_name": "Pasta Carbonara",
+          "description": "A classic Italian pasta dish.",
+          "ingredients": [
+            "pasta",
+            "eggs",
+            "pancetta",
+            "pecorino romano cheese"
+          ],
+          "instructions": "Cook pasta, whisk eggs with cheese, add pancetta, combine.",
+          "image_url": "/images/pasta_carbonara.jpg",
+          "prep_time": 15,
+          "cook_time": 20,
+          "servings": 2,
+          "calories": 600,
+          "dietary_restrictions": [
+            "gluten-free"
+          ],
+          "nutritional_info": {
+            "carbs": 50,
+            "protein": 30,
+            "fats": 20
+          }
         },
-        "name": {
-          "type": "string",
-          "required": true
-        },
-        "brand": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "price": {
-          "type": "number",
-          "required": true
-        },
-        "stock": {
-          "type": "integer"
-        },
-        "rating": {
-          "type": "number"
-        },
-        "warranty_period": {
-          "type": "string"
-        },
-        "energy_rating": {
-          "type": "string"
-        },
-        "specifications": {
-          "type": "object"
-        },
-        "reviews": {
-          "type": "array"
-        },
-        "images": {
-          "type": "array"
-        }
+        "indexes": [
+          "recipe_name"
+        ],
+        "storage_recommendation": "PostgreSQL"
       },
       "users": {
-        "user_id": {
-          "type": "string",
-          "required": true
+        "fields": [
+          {
+            "field": "user_id",
+            "type": "SERIAL PRIMARY KEY"
+          },
+          {
+            "field": "username",
+            "type": "VARCHAR(255)",
+            "required": true,
+            "unique": true
+          },
+          {
+            "field": "email",
+            "type": "VARCHAR(255)",
+            "required": true,
+            "unique": true
+          },
+          {
+            "field": "password",
+            "type": "VARCHAR(255)",
+            "required": true
+          },
+          {
+            "field": "saved_recipes",
+            "type": "JSONB"
+          }
+        ],
+        "sample_record": {
+          "user_id": 1,
+          "username": "john_doe",
+          "email": "john.doe@example.com",
+          "password": "$2b$10$...hashed_password...",
+          "saved_recipes": [
+            1,
+            2,
+            3
+          ]
         },
-        "username": {
-          "type": "string",
-          "required": true
-        },
-        "email": {
-          "type": "string",
-          "required": true
-        },
-        "password": {
-          "type": "string",
-          "required": true
-        },
-        "address": {
-          "type": "string"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "wishlist": {
-          "type": "array"
-        },
-        "orders": {
-          "type": "array"
-        },
-        "service_requests": {
-          "type": "array"
-        }
+        "indexes": [
+          "username",
+          "email"
+        ],
+        "storage_recommendation": "PostgreSQL"
       },
-      "orders": {
-        "order_id": {
-          "type": "string",
-          "required": true
+      "user_recipes": {
+        "fields": [
+          {
+            "field": "user_id",
+            "type": "INTEGER",
+            "references": "users(user_id)"
+          },
+          {
+            "field": "recipe_id",
+            "type": "INTEGER",
+            "references": "recipes(recipe_id)"
+          },
+          {
+            "field": "saved_at",
+            "type": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "sample_record": {
+          "user_id": 1,
+          "recipe_id": 1,
+          "saved_at": "2023-10-27T16:30:00Z"
         },
-        "user_id": {
-          "type": "string",
-          "required": true
-        },
-        "products": {
-          "type": "array",
-          "required": true
-        },
-        "total_amount": {
-          "type": "number",
-          "required": true
-        },
-        "status": {
-          "type": "string",
-          "required": true
-        },
-        "payment_method": {
-          "type": "string"
-        },
-        "shipping_address": {
-          "type": "string"
-        },
-        "created_at": {
-          "type": "datetime"
-        }
-      },
-      "reviews": {
-        "review_id": {
-          "type": "string",
-          "required": true
-        },
-        "user_id": {
-          "type": "string",
-          "required": true
-        },
-        "product_id": {
-          "type": "string",
-          "required": true
-        },
-        "rating": {
-          "type": "integer",
-          "required": true
-        },
-        "comment": {
-          "type": "string"
-        },
-        "created_at": {
-          "type": "datetime"
-        }
-      },
-      "service_requests": {
-        "request_id": {
-          "type": "string",
-          "required": true
-        },
-        "user_id": {
-          "type": "string",
-          "required": true
-        },
-        "product_id": {
-          "type": "string",
-          "required": true
-        },
-        "issue_description": {
-          "type": "string",
-          "required": true
-        },
-        "status": {
-          "type": "string",
-          "required": true
-        },
-        "created_at": {
-          "type": "datetime"
-        }
+        "indexes": [
+          "user_id",
+          "recipe_id"
+        ],
+        "storage_recommendation": "PostgreSQL"
       }
     },
     "flows": [],
     "admin_components": [],
     "implementation_notes": {
-      "frontend": "Use React, Redux, and Chart.js",
-      "backend": "Use Node.js and Express.js",
-      "database": "Use PostgreSQL"
+      "frontend": "Use React, Redux, and Chart.js.",
+      "backend": "Use Node.js and Express.js.",
+      "database": "Use PostgreSQL."
     },
     "accessibility_summary": {
-      "aria": "Use ARIA attributes for all interactive elements",
-      "keyboard": "Ensure keyboard navigation is possible",
-      "contrast": "Maintain sufficient color contrast"
+      "aria": "Use appropriate ARIA attributes for all interactive elements.",
+      "keyboard": "Ensure full keyboard navigation.",
+      "contrast": "Maintain sufficient color contrast ratios."
     },
     "i18n_keys_sample": {
-      "addToCart": {
-        "en": "Add to Cart",
-        "es": "Añadir al carrito"
+      "en": {
+        "welcome": "Welcome to Our Recipe App!",
+        "search": "Search Recipes"
+      },
+      "es": {
+        "welcome": "¡Bienvenido a nuestra aplicación de recetas!",
+        "search": "Buscar recetas"
       }
     },
     "performance_tips": {
-      "lcp": "Optimize images and lazy load components",
-      "fid": "Improve responsiveness",
-      "cls": "Avoid layout shifts"
+      "lcp": "Optimize images and lazy load components.",
+      "fid": "Minimize blocking JavaScript.",
+      "cls": "Avoid layout shifts."
     },
     "monitoring_and_metrics": {
       "events": [
-        "Add to Cart",
-        "Checkout",
-        "Order Placed"
+        "recipe_search",
+        "recipe_save",
+        "user_signup",
+        "user_login"
       ],
       "metrics": [
-        "Conversion Rate",
-        "Average Order Value",
-        "Error Rate"
-      ]
+        "daily_active_users",
+        "recipe_views",
+        "recipe_saves",
+        "search_queries"
+      ],
+      "alert_thresholds": {
+        "error_rate": 0.01
+      }
     },
     "testing_plan": {
-      "unit": "Write unit tests for components and API endpoints",
-      "integration": "Write integration tests for API endpoints",
-      "e2e": "Write E2E tests using Cypress or Playwright"
+      "unit": "Write unit tests for all components and services.",
+      "integration": "Write integration tests to verify API interactions.",
+      "e2e": "Use Cypress or Playwright for end-to-end testing."
     },
     "deployment_plan": {
       "environments": [
-        "Development",
-        "Staging",
-        "Production"
+        "development",
+        "staging",
+        "production"
       ],
-      "ci_cd": "Use Docker and Kubernetes for deployment"
+      "ci_cd": "Use a CI/CD pipeline to automate deployment.",
+      "infra": "Use AWS, Docker, and Kubernetes."
     },
     "next_steps": [
-      "Implement user authentication",
-      "Implement product search and filtering",
-      "Implement Add to Cart functionality",
-      "Implement Checkout flow",
-      "Implement Admin Dashboard"
+      "Implement the Homepage and RecipeCard components.",
+      "Develop the backend API endpoints for recipes.",
+      "Implement user authentication and authorization.",
+      "Design and implement the Recipe Detail page.",
+      "Implement recipe saving functionality."
     ]
   }
 }

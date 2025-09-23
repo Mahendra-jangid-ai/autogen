@@ -7,12 +7,10 @@ import re
 import textwrap
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple, List
-
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
-
-import asyncio
 import json5
+import asyncio
 
 try:
     import jsonschema
@@ -27,7 +25,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("ui-generator-super")
-
+    
 Tk().withdraw()
 
 INPUT_SYSTEM_FILE = os.getenv("INPUT_SYSTEM_FILE") or askopenfilename(
@@ -73,19 +71,19 @@ def save_raw_output(path: Path, text: str):
     logger.info("Saved raw model output to %s", path)
 
 
-def try_install_jsonschema():
-    global jsonschema
-    if jsonschema is None:
-        logger.info("jsonschema not installed. Attempting to install via pip...")
-        try:
-            import subprocess
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "jsonschema"])
-            import importlib
-            jsonschema = importlib.import_module("jsonschema")
-            logger.info("Installed jsonschema successfully.")
-        except Exception as e:
-            logger.warning("Could not install jsonschema automatically: %s", e)
-            jsonschema = None
+# def try_install_jsonschema():
+#     global jsonschema
+#     if jsonschema is None:
+#         logger.info("jsonschema not installed. Attempting to install via pip...")
+#         try:
+#             import subprocess
+#             subprocess.check_call([sys.executable, "-m", "pip", "install", "jsonschema"])
+#             import importlib
+#             jsonschema = importlib.import_module("jsonschema")
+#             logger.info("Installed jsonschema successfully.")
+#         except Exception as e:
+#             logger.warning("Could not install jsonschema automatically: %s", e)
+#             jsonschema = None
 
 
 def summarize_json_for_prompt(j: Dict, role: str = "system", max_chars: int = 4000) -> Tuple[str, bool]:
@@ -97,7 +95,6 @@ def summarize_json_for_prompt(j: Dict, role: str = "system", max_chars: int = 40
         parts = []
         keys = list(j.keys())[:50]
         parts.append(f"TOP_KEYS: {', '.join(keys)}")
-        # heuristics
         def get_path(obj, *path):
             cur = obj
             for p in path:
@@ -126,7 +123,7 @@ def summarize_json_for_prompt(j: Dict, role: str = "system", max_chars: int = 40
         summary = "\n".join(parts)
         if len(summary) > max_chars:
             return summary[:max_chars] + "\n...TRUNCATED...", True
-        return summary, False
+            return summary, False
     except Exception as e:
         return f"(unable to summarize input: {e})", True
 
@@ -157,48 +154,6 @@ UI_SPEC_JSON_SCHEMA: Dict[str, Any] = {
     },
     "additionalProperties": True
 }
-
-FEW_SHOT_EXAMPLES = [
-    {
-        "input": {
-            "requirements": {
-                "features": ["Catalog", "Add to cart", "Checkout"],
-                "pages": ["Catalog", "Product Detail", "Cart", "Checkout"],
-                "data_models": {
-                    "products": {"id": "int", "name": "string", "price": "float"},
-                    "orders": {"id": "int", "items": "array"}
-                }
-            }
-        },
-        "output": {
-            "ui_spec": {
-                "project": "ExampleShop",
-                "inferred_domain": "e-commerce",
-                "generated_at": "2024-01-01T00:00:00Z",
-                "source_files": {"system": "example_system.json", "requirements": "example_req.json"},
-                "purpose": "Allow users to browse and purchase products online.",
-                "assumptions": ["Catalog has categories"],
-                "pages": [
-                    {
-                        "name": "Catalog",
-                        "type": "Page",
-                        "route": "/catalog",
-                        "seo_meta": {"title": "Shop - Catalog", "description": "Browse products."},
-                        "props": {"products": "Array<product>"},
-                        "content": [
-                            {"type": "Heading", "content": "Shop all products", "purpose": "Introduce catalog"},
-                            {"type": "ProductGrid", "purpose": "Show list of products", "developer_instructions": ["GET /api/products?page=1"], "a11y_notes": "grid role"}
-                        ]
-                    }
-                ],
-                "components": [
-                    {"name": "ProductCard", "type": "Component", "props": {"product": "product"}, "developer_instructions": ["render product data", "Add to cart button calls POST /api/cart"]}
-                ],
-                "data_models": {"products": {"id": "int", "name": "string", "price": "float"}}
-            }
-        }
-    }
-]
 
 def build_master_prompt(system_json: Dict, req_json: Dict, summarize_inputs: bool = True, examples: List[Dict] = None) -> str:
     """
@@ -233,7 +188,7 @@ def build_master_prompt(system_json: Dict, req_json: Dict, summarize_inputs: boo
     2) The top-level key must be "ui_spec".
     3) If any requirement is ambiguous, make reasonable assumptions and list them under "assumptions".
     4) If System and Requirements contradict, treat Requirements as source of truth.
-    5) Use domain-specific CTAs and microcopy (e.g., e-commerce: "🛒 Add to Cart", healthcare: "👩‍⚕️ Book Appointment").
+    5) Use domain-specific CTAs and microcopy (e.g., e-commerce: "Add to Cart", healthcare: "Book Appointment").
     6) Include developer-level instructions (step-by-step) for each page and component.
     7) Include accessibility notes (ARIA, keyboard, contrast), i18n keys, SEO meta, performance advice, monitoring, testing, and deployment plan.
 
@@ -365,12 +320,12 @@ def extract_json_from_text(text: str) -> Optional[Dict]:
         return None
 
 async def generate_ui_spec():
-    try_install_jsonschema()
+    # try_install_jsonschema()
 
     system_json = read_json_file(INPUT_SYSTEM_FILE)
     req_json = read_json_file(INPUT_REQUIRE_FILE)
 
-    prompt = build_master_prompt(system_json, req_json, summarize_inputs=SUMMARIZE_INPUTS, examples=FEW_SHOT_EXAMPLES)
+    prompt = build_master_prompt(system_json, req_json, summarize_inputs=SUMMARIZE_INPUTS)
 
     logger.info("Prompt length: %d chars", len(prompt))
     logger.info("Using model: %s (temperature=%s)", GEMINI_MODEL, TEMPERATURE)
@@ -431,7 +386,7 @@ async def generate_ui_spec():
         refine_instruction = {
             "reason": "validation_failed" if parsed else "parse_failed",
             "parsed": parsed or {},
-            "raw_text_snippet": raw_text[:15000]  # send snippet
+            "raw_text_snippet": raw_text[:15000] 
         }
         refine_prompt = textwrap.dedent(f"""
         You are an AI JSON Refiner. The system attempted to generate a production-ready "ui_spec" JSON but the output was invalid or incomplete.
