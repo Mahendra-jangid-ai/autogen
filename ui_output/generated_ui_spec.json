@@ -7,16 +7,16 @@
       "system_design": "system_designs/system_design_20250828_150437.json",
       "requirements": "requirements/requirements_20250828_150428.json"
     },
-    "purpose": "To design and specify the UI for a recipe application that allows users to search, filter, save, and view recipes.",
+    "purpose": "To design and implement a user-friendly recipe application.",
     "assumptions": [
       "JWT is used for authentication.",
       "Recipes are fetched in batches of 20.",
-      "Images are optimized for web performance.",
-      "The application will support English and Spanish."
+      "Images are stored externally (e.g., AWS S3).",
+      "Nutritional information is provided by a third-party API (or calculated)."
     ],
     "pages": [
       {
-        "purpose": "Display featured recipes and allow users to search for recipes.",
+        "purpose": "Display featured recipes and allow users to search and filter recipes.",
         "props": {
           "schema": {
             "featuredRecipes": {
@@ -30,10 +30,10 @@
             "featuredRecipes": [
               {
                 "recipe_id": 1,
-                "recipe_name": "Pasta Carbonara",
-                "image_url": "/images/pasta_carbonara.jpg",
+                "recipe_name": "Pasta Primavera",
+                "image_url": "/images/pasta_primavera.jpg",
                 "prep_time": 15,
-                "cook_time": 20
+                "cook_time": 25
               }
             ]
           }
@@ -44,10 +44,10 @@
             "content": "Welcome to Our Recipe App!",
             "purpose": "Welcome the user.",
             "developer_instructions": [
-              "Render a h1 element with the text."
+              "Render a h1 tag with the text."
             ],
             "a11y_notes": "Use role=\"heading\" aria-level=\"1\"",
-            "mobile_notes": "Ensure text is appropriately sized for smaller screens.",
+            "mobile_notes": "Ensure text wraps appropriately.",
             "loading_state": {
               "message": "Loading...",
               "developer_guidance": "Display a loading indicator."
@@ -58,40 +58,75 @@
           {
             "type": "Paragraph",
             "content": "Discover delicious and healthy recipes.",
-            "purpose": "Provide a brief description of the app.",
+            "purpose": "Provide a brief description.",
             "developer_instructions": [
-              "Render a p element with the text."
+              "Render a p tag with the text."
             ],
             "a11y_notes": {},
             "mobile_notes": {},
             "loading_state": {},
             "empty_state": {},
             "error_state": {}
-          },
-          {
-            "type": "RecipeList",
-            "content": "Featured Recipes",
-            "purpose": "Display featured recipes.",
-            "developer_instructions": [
-              "Fetch featured recipes from `/recipes` endpoint.",
-              "Pass the data to the `RecipeList` component."
-            ],
-            "a11y_notes": "Ensure proper ARIA attributes for list items.",
-            "mobile_notes": "Use a responsive grid layout.",
-            "loading_state": {
-              "message": "Loading featured recipes...",
-              "developer_guidance": "Display a loading indicator."
-            },
-            "empty_state": {
-              "message": "No featured recipes found.",
-              "developer_guidance": "Display a message indicating no recipes."
-            },
-            "error_state": {
-              "message": "Error loading featured recipes.",
-              "developer_guidance": "Display an error message and retry button."
-            }
           }
         ]
+      },
+      {
+        "purpose": "Display a list of recipes matching search and filter criteria.",
+        "props": {
+          "schema": {
+            "recipes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RecipeSummary"
+              }
+            }
+          },
+          "example": {
+            "recipes": [
+              {
+                "recipe_id": 1,
+                "recipe_name": "Pasta Primavera",
+                "image_url": "/images/pasta_primavera.jpg",
+                "prep_time": 15,
+                "cook_time": 25
+              }
+            ]
+          }
+        },
+        "content": []
+      },
+      {
+        "purpose": "Show detailed information about a specific recipe.",
+        "props": {
+          "schema": {
+            "$ref": "#/definitions/Recipe"
+          },
+          "example": {}
+        },
+        "content": []
+      },
+      {
+        "purpose": "Allow users to manage their profile and saved recipes.",
+        "props": {
+          "schema": {
+            "user": {
+              "$ref": "#/definitions/User"
+            },
+            "savedRecipes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RecipeSummary"
+              }
+            }
+          },
+          "example": {}
+        },
+        "content": []
+      },
+      {
+        "purpose": "Provide information about the application.",
+        "props": {},
+        "content": []
       }
     ],
     "components": [
@@ -103,37 +138,36 @@
             "recipe": {
               "$ref": "#/definitions/RecipeSummary"
             }
-          }
-        },
-        "sample_props": {
-          "recipe": {
-            "recipe_id": 1,
-            "recipe_name": "Pasta Carbonara",
-            "image_url": "/images/pasta_carbonara.jpg",
-            "prep_time": 15,
-            "cook_time": 20
+          },
+          "example": {
+            "recipe": {
+              "recipe_id": 1,
+              "recipe_name": "Pasta Primavera",
+              "image_url": "/images/pasta_primavera.jpg",
+              "prep_time": 15,
+              "cook_time": 25
+            }
           }
         },
         "microcopy": {
           "title": "{{recipe.recipe_name}}",
-          "prep_time": "Prep time: {{recipe.prep_time}} min",
-          "cook_time": "Cook time: {{recipe.cook_time}} min"
+          "prepTime": "Prep time: {{recipe.prep_time}} mins",
+          "cookTime": "Cook time: {{recipe.cook_time}} mins",
+          "save": "Save Recipe"
         },
         "validation_rules": {},
-        "developer_instructions": [
-          "Implement using React.",
-          "Use Redux for state management.",
-          "Write unit tests using Jest and React Testing Library."
-        ],
-        "accessibility_notes": "Ensure sufficient color contrast and keyboard navigation."
+        "developer_instructions": [],
+        "accessibility_notes": "Ensure sufficient color contrast."
       }
     ],
     "data_models": {
-      "recipes": {
+      "Recipe": {
         "fields": [
           {
             "field": "recipe_id",
-            "type": "SERIAL PRIMARY KEY"
+            "type": "INTEGER",
+            "required": true,
+            "primaryKey": true
           },
           {
             "field": "recipe_name",
@@ -142,31 +176,38 @@
           },
           {
             "field": "description",
-            "type": "TEXT"
+            "type": "TEXT",
+            "required": true
           },
           {
             "field": "ingredients",
-            "type": "JSONB"
+            "type": "JSONB",
+            "required": true
           },
           {
             "field": "instructions",
-            "type": "TEXT"
+            "type": "TEXT",
+            "required": true
           },
           {
             "field": "image_url",
-            "type": "VARCHAR(255)"
+            "type": "VARCHAR(255)",
+            "required": true
           },
           {
             "field": "prep_time",
-            "type": "INTEGER"
+            "type": "INTEGER",
+            "required": true
           },
           {
             "field": "cook_time",
-            "type": "INTEGER"
+            "type": "INTEGER",
+            "required": true
           },
           {
             "field": "servings",
-            "type": "INTEGER"
+            "type": "INTEGER",
+            "required": true
           },
           {
             "field": "calories",
@@ -183,27 +224,26 @@
         ],
         "sample_record": {
           "recipe_id": 1,
-          "recipe_name": "Pasta Carbonara",
-          "description": "A classic Italian pasta dish.",
+          "recipe_name": "Pasta Primavera",
+          "description": "A delicious pasta dish with fresh vegetables.",
           "ingredients": [
             "pasta",
-            "eggs",
-            "pancetta",
-            "pecorino romano cheese"
+            "vegetables",
+            "olive oil"
           ],
-          "instructions": "Cook pasta, whisk eggs with cheese, add pancetta, combine.",
-          "image_url": "/images/pasta_carbonara.jpg",
+          "instructions": "Cook pasta, sauté vegetables, combine.",
+          "image_url": "/images/pasta_primavera.jpg",
           "prep_time": 15,
-          "cook_time": 20,
-          "servings": 2,
-          "calories": 600,
+          "cook_time": 25,
+          "servings": 4,
+          "calories": 400,
           "dietary_restrictions": [
-            "gluten-free"
+            "vegetarian"
           ],
           "nutritional_info": {
             "carbs": 50,
-            "protein": 30,
-            "fats": 20
+            "protein": 15,
+            "fats": 10
           }
         },
         "indexes": [
@@ -211,11 +251,13 @@
         ],
         "storage_recommendation": "PostgreSQL"
       },
-      "users": {
+      "User": {
         "fields": [
           {
             "field": "user_id",
-            "type": "SERIAL PRIMARY KEY"
+            "type": "SERIAL",
+            "required": true,
+            "primaryKey": true
           },
           {
             "field": "username",
@@ -241,13 +283,12 @@
         ],
         "sample_record": {
           "user_id": 1,
-          "username": "john_doe",
+          "username": "johndoe",
           "email": "john.doe@example.com",
           "password": "$2b$10$...hashed_password...",
           "saved_recipes": [
             1,
-            2,
-            3
+            2
           ]
         },
         "indexes": [
@@ -256,46 +297,39 @@
         ],
         "storage_recommendation": "PostgreSQL"
       },
-      "user_recipes": {
+      "RecipeSummary": {
         "fields": [
           {
-            "field": "user_id",
-            "type": "INTEGER",
-            "references": "users(user_id)"
-          },
-          {
             "field": "recipe_id",
-            "type": "INTEGER",
-            "references": "recipes(recipe_id)"
+            "type": "INTEGER"
           },
           {
-            "field": "saved_at",
-            "type": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+            "field": "recipe_name",
+            "type": "VARCHAR(255)"
+          },
+          {
+            "field": "image_url",
+            "type": "VARCHAR(255)"
+          },
+          {
+            "field": "prep_time",
+            "type": "INTEGER"
+          },
+          {
+            "field": "cook_time",
+            "type": "INTEGER"
           }
         ],
-        "sample_record": {
-          "user_id": 1,
-          "recipe_id": 1,
-          "saved_at": "2023-10-27T16:30:00Z"
-        },
-        "indexes": [
-          "user_id",
-          "recipe_id"
-        ],
-        "storage_recommendation": "PostgreSQL"
+        "sample_record": {}
       }
     },
     "flows": [],
     "admin_components": [],
-    "implementation_notes": {
-      "frontend": "Use React, Redux, and Chart.js.",
-      "backend": "Use Node.js and Express.js.",
-      "database": "Use PostgreSQL."
-    },
+    "implementation_notes": {},
     "accessibility_summary": {
-      "aria": "Use appropriate ARIA attributes for all interactive elements.",
-      "keyboard": "Ensure full keyboard navigation.",
-      "contrast": "Maintain sufficient color contrast ratios."
+      "aria_labels": "Use descriptive ARIA labels for all interactive elements.",
+      "keyboard_navigation": "Ensure all interactive elements are keyboard accessible.",
+      "color_contrast": "Maintain sufficient color contrast ratios (WCAG AA)."
     },
     "i18n_keys_sample": {
       "en": {
@@ -304,51 +338,22 @@
       },
       "es": {
         "welcome": "¡Bienvenido a nuestra aplicación de recetas!",
-        "search": "Buscar recetas"
+        "search": "Buscar Recetas"
       }
     },
     "performance_tips": {
-      "lcp": "Optimize images and lazy load components.",
-      "fid": "Minimize blocking JavaScript.",
-      "cls": "Avoid layout shifts."
+      "image_optimization": "Optimize images for web.",
+      "lazy_loading": "Use lazy loading for images."
     },
-    "monitoring_and_metrics": {
-      "events": [
-        "recipe_search",
-        "recipe_save",
-        "user_signup",
-        "user_login"
-      ],
-      "metrics": [
-        "daily_active_users",
-        "recipe_views",
-        "recipe_saves",
-        "search_queries"
-      ],
-      "alert_thresholds": {
-        "error_rate": 0.01
-      }
-    },
-    "testing_plan": {
-      "unit": "Write unit tests for all components and services.",
-      "integration": "Write integration tests to verify API interactions.",
-      "e2e": "Use Cypress or Playwright for end-to-end testing."
-    },
-    "deployment_plan": {
-      "environments": [
-        "development",
-        "staging",
-        "production"
-      ],
-      "ci_cd": "Use a CI/CD pipeline to automate deployment.",
-      "infra": "Use AWS, Docker, and Kubernetes."
-    },
+    "monitoring_and_metrics": {},
+    "testing_plan": {},
+    "deployment_plan": {},
     "next_steps": [
-      "Implement the Homepage and RecipeCard components.",
-      "Develop the backend API endpoints for recipes.",
-      "Implement user authentication and authorization.",
-      "Design and implement the Recipe Detail page.",
-      "Implement recipe saving functionality."
+      "Implement the RecipeCard component.",
+      "Design the Recipe Listing page.",
+      "Implement the API endpoints for recipes.",
+      "Implement user authentication.",
+      "Develop the homepage"
     ]
   }
 }

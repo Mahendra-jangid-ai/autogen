@@ -1,43 +1,3 @@
-# import os
-# import json
-# import json5
-# import jsonschema
-# from pathlib import Path
-# from tkinter import Tk
-# from tkinter.filedialog import askopenfilename
-# from langchain_google_genai import ChatGoogleGenerativeAI
-
-# Tk().withdraw()
-
-# INPUT_CONTENT_SCHEMA = askopenfilename(title="Select Input Content Schema JSON5 File")
-# if not INPUT_CONTENT_SCHEMA:
-#     raise ValueError("No input content schema file selected.")
-#     sys.exit(1)
-
-# OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "ui_output"))
-# OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-# RAW_OUTPUT_PATH = OUTPUT_DIR / "generated_ui_spec_raw.txt"
-# GENERATED_JSON_PATH = OUTPUT_DIR / "generated_ui_spec.json"
-# FAILED_JSON_PATH = OUTPUT_DIR / "generated_ui_spec_failed.json"
-
-# GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-# TEMPERATURE = float(os.getenv("TEMPERATURE", "0.01"))
-# MAX_ATTEMPTS = int(os.getenv("MAX_ATTEMPTS", "5"))
-# SUMMARIZE_INPUTS = os.getenv("SUMMARIZE_INPUTS", "0").strip() in ("1", "true", "yes")
-# FORCE_FULL_PROMPT = os.getenv("FORCE_FULL_PROMPT", "0").strip() in ("1", "true", "yes")
-
-# def read_json(file_path: str):
-#     with open(file_path, "r") as f:
-#         return json.load(f)
-    
-# def atomic_write_json(file_path: str, data):
-#     temp_path = file_path + ".tmp"
-#     with open(temp_path, "w") as f:
-#         json.dump(data, f, indent=2)
-#     os.replace(temp_path, file_path)
-
-
 import os
 import sys
 import json
@@ -46,37 +6,25 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# ------------------------------
-# Tkinter file dialog
-# ------------------------------
 Tk().withdraw()
 input_file = askopenfilename(
     title="Select JSON Spec File",
     filetypes=[("JSON/JSON5 files", "*.json *.json5")]
 )
 if not input_file:
-    print("❌ No file selected, exiting...")
+    print("No file selected, exiting...")
     sys.exit(1)
 
-# ------------------------------
-# Read JSON
-# ------------------------------
 def read_json(file_path: str):
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 ui_json = read_json(input_file)
 
-# ------------------------------
-# Project Output Directory
-# ------------------------------
 project_name = ui_json.get("ui_spec", {}).get("project", "MyProject").replace(" ", "")
 OUTPUT_DIR = Path("src") / project_name
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# ------------------------------
-# User Preferences
-# ------------------------------
 def ask_choice(question: str, default: str):
     print(f"{question} (default: {default})")
     ans = input().strip()
@@ -90,21 +38,15 @@ routing = ask_choice("Choose routing solution [React Router/Vue Router/None]:", 
 
 ext = "tsx" if language.lower() == "ts" else "jsx"
 
-# ------------------------------
-# Initialize LLM
-# ------------------------------
 API_KEY = os.getenv("GOOGLE_API_KEY")
 if not API_KEY:
     raise ValueError("Please set your GOOGLE_API_KEY environment variable!")
 
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-TEMPERATURE = float(os.getenv("TEMPERATURE", "0.01"))
+TEMPERATURE = float(os.getenv("TEMPERATURE", "1"))
 
 llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=TEMPERATURE, api_key=API_KEY)
 
-# ------------------------------
-# Utilities
-# ------------------------------
 def write_file(file_path: Path, content: str):
     file_path.parent.mkdir(parents=True, exist_ok=True)
     with open(file_path, "w", encoding="utf-8") as f:
@@ -115,9 +57,6 @@ def safe_slug(name: str, default: str = "Untitled"):
         return default
     return "".join(c for c in name.title().replace(" ", "") if c.isalnum())
 
-# ------------------------------
-# Generate code from full JSON spec
-# ------------------------------
 def generate_code_from_spec(full_spec: dict):
     """
     Generate fully detailed static code from JSON spec.
@@ -152,7 +91,6 @@ Do NOT include markdown, explanations, or partial/skeleton code. Only output ful
 """
     response = llm.invoke(prompt)
 
-    # Extract text (handle Markdown code block if any)
     if hasattr(response, "content"):
         resp_text = response.content
     elif isinstance(response, str):
@@ -169,35 +107,27 @@ Do NOT include markdown, explanations, or partial/skeleton code. Only output ful
     try:
         return json.loads(resp_text)
     except Exception as e:
-        print("⚠️ Error parsing LLM output:", e)
+        print("Error parsing LLM output:", e)
         print("Raw output (first 500 chars):", resp_text[:500])
         return {}
 
-# ------------------------------
-# Main Generation
-# ------------------------------
 def generate_ui_from_json(json_spec: dict, output_dir: Path = OUTPUT_DIR):
     generated_code_record = {}
 
-    # Generate full project at once to respect component relationships
     code_files = generate_code_from_spec(json_spec)
     for filename, content in code_files.items():
         file_path = output_dir / filename
         write_file(file_path, content)
-        print(f"✅ Generated: {file_path}")
+        print(f"Generated: {file_path}")
         slug_name = safe_slug(Path(filename).stem)
         generated_code_record[slug_name] = filename
 
-    # Save record
     record_path = output_dir / "generated_code_record.json"
     with open(record_path, "w", encoding="utf-8") as f:
         json.dump(generated_code_record, f, indent=2)
 
-    print(f"📄 JSON record saved at: {record_path}")
-    print(f"🎉 UI code generation completed under '{output_dir}' folder.")
+    print(f"JSON record saved at: {record_path}")
+    print(f"UI code generation completed under '{output_dir}' folder.")
 
-# ------------------------------
-# Run
-# ------------------------------
 if __name__ == "__main__":
     generate_ui_from_json(ui_json)
