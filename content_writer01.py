@@ -73,7 +73,6 @@ def save_raw_output(path: Path, text: str):
     logger.info("Saved raw model output to %s", path)
 
 
-
 def summarize_json_for_prompt(j: Dict, role: str = "system", max_chars: int = 4000) -> Tuple[str, bool]:
     """
     Produce a concise, structured summary of an input JSON for embedding in the prompt.
